@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="dashboard-container">
+    <nav class="glass-nav">
+        <h2>Welcome, {{ current_user.username }}!</h2>
+        <a href="{{ url_for('auth.logout') }}" class="btn-logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </nav>
+    <div class="dashboard-content">
+        <div class="stats-card">
+            <i class="fas fa-clock"></i>
+            <h3>Last Login</h3>
+            <p>{{ current_user.last_login.strftime('%Y-%m-%d %H:%M:%S') if current_user.last_login else 'First Login' }}</p>
+        </div>
+        <div class="stats-card">
+            <i class="fas fa-sign-in-alt"></i>
+            <h3>Login Count</h3>
+            <p>{{ current_user.login_count }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

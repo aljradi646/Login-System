@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="glass-container">
+    <h2><i class="fas fa-user-plus"></i> Register</h2>
+    <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm" novalidate>
+        <div class="form-group">
+            <i class="fas fa-user"></i>
+            <input type="text" name="first_name" id="firstName" placeholder="First Name" required
+                   value="{{ first_name if first_name else '' }}">
+            <span class="validation-icon" id="firstNameIcon">
+                <i class="fas fa-check-circle valid-icon"></i>
+                <i class="fas fa-exclamation-circle invalid-icon"></i>
+            </span>
+        </div>
+        
+        <div class="form-group">
+            <i class="fas fa-user"></i>
+            <input type="text" name="last_name" id="lastName" placeholder="Last Name" required
+                   value="{{ last_name if last_name else '' }}">
+            <span class="validation-icon" id="lastNameIcon">
+                <i class="fas fa-check-circle valid-icon"></i>
+                <i class="fas fa-exclamation-circle invalid-icon"></i>
+            </span>
+        </div>
+        
+        <div class="form-group">
+            <i class="fas fa-at"></i>
+            <input type="text" name="username" id="username" placeholder="Username" required
+                   value="{{ username if username else '' }}">
+            <span class="validation-icon" id="usernameIcon">
+                <i class="fas fa-check-circle valid-icon"></i>
+                <i class="fas fa-exclamation-circle invalid-icon"></i>
+                <i class="fas fa-spinner fa-spin loading-icon"></i>
+            </span>
+            <div class="hint" id="usernameHint"></div>
+        </div>
+        
+        <div class="form-group">
+            <i class="fas fa-envelope"></i>
+            <input type="email" name="email" id="email" placeholder="Email" required
+                   value="{{ email if email else '' }}">
+            <span class="validation-icon" id="emailIcon">
+                <i class="fas fa-check-circle valid-icon"></i>
+                <i class="fas fa-exclamation-circle invalid-icon"></i>
+            </span>
+            <div class="hint" id="emailHint"></div>
+        </div>
+        
+        <div class="form-group">
+            <i class="fas fa-globe"></i>
+            <select name="country" id="country" required>
+                <option value="" disabled selected>Select Country</option>
+                <option value="US" {% if country == 'US' %}selected{% endif %}>United States</option>
+                <option value="SA" {% if country == 'SA' %}selected{% endif %}>Saudi Arabia</option>
+                <option value="EG" {% if country == 'EG' %}selected{% endif %}>Egypt</option>
+                <option value="AE" {% if country == 'AE' %}selected{% endif %}>United Arab Emirates</option>
+            </select>
+            <span class="validation-icon" id="countryIcon">
+                <i class="fas fa-check-circle valid-icon"></i>
+                <i class="fas fa-exclamation-circle invalid-icon"></i>
+            </span>
+        </div>
+        
+        <div class="form-group">
+            <i class="fas fa-phone"></i>
+            <input type="tel" name="phone" id="phone" placeholder="Phone Number" required
+                   value="{{ phone if phone else '' }}">
+            <span class="validation-icon" id="phoneIcon">
+                <i class="fas fa-check-circle valid-icon"></i>
+                <i class="fas fa-exclamation-circle invalid-icon"></i>
+            </span>
+        </div>
+        
+        <div class="form-group">
+            <i class="fas fa-key"></i>
+            <input type="password" name="password" id="password" placeholder="Password" required>
+            <span class="validation-icon" id="passwordIcon">
+                <i class="fas fa-check-circle valid-icon"></i>
+                <i class="fas fa-exclamation-circle invalid-icon"></i>
+            </span>
+            <div class="password-strength">
+                <div class="strength-bar"></div>
+                <div class="hint">Must contain: uppercase, lowercase, number, special char</div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <i class="fas fa-key"></i>
+            <input type="password" name="confirm_password" id="confirmPassword" placeholder="Confirm Password" required>
+            <span class="validation-icon" id="confirmPasswordIcon">
+                <i class="fas fa-check-circle valid-icon"></i>
+                <i class="fas fa-exclamation-circle invalid-icon"></i>
+            </span>
+            <div class="hint" id="confirmPasswordHint"></div>
+        </div>
+        
+        <div class="form-check">
+            <input type="checkbox" name="terms" id="terms" required {% if terms %}checked{% endif %}>
+            <label for="terms">I agree to the <a href="#" class="terms-link">Terms & Privacy Policy</a></label>
+            <span class="validation-icon" id="termsIcon">
+                <i class="fas fa-check-circle valid-icon"></i>
+                <i class="fas fa-exclamation-circle invalid-icon"></i>
+            </span>
+        </div>
+        
+        <button type="submit" class="btn-gradient" id="registerBtn" disabled>
+            <span>Register</span>
+            <i class="fas fa-user-plus"></i>
+        </button>
+    </form>
+    <div class="links">
+        <a href="{{ url_for('auth.login') }}">Already have an account?</a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const usernameInput = document.getElementById('username');
+    const usernameIcon = document.getElementById('usernameIcon');
+    const usernameHint = document.getElementById('usernameHint');
+    
+    // التحقق من اسم المستخدم أثناء الكتابة
+    usernameInput.addEventListener('input', function() {
+        const username = this.value.trim();
+        
+        if (username.length < 4) {
+            showUsernameStatus(false, 'Username must be at least 4 characters');
+            return;
+        }
+        
+        showLoading(usernameIcon, true);
+        usernameHint.textContent = 'Checking availability...';
+        usernameHint.style.display = 'block';
+        
+        // إرسال طلب AJAX للتحقق من اسم المستخدم
+        fetch('/check_username', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `username=${encodeURIComponent(username)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            showLoading(usernameIcon, false);
+            if (data.available) {
+                showUsernameStatus(true, 'Username available');
+            } else {
+                showUsernameStatus(false, 'Username already taken');
+            }
+        })
+        .catch(error => {
+            showLoading(usernameIcon, false);
+            showUsernameStatus(false, 'Error checking username');
+        });
+    });
+    
+    function showUsernameStatus(valid, message) {
+        const formGroup = usernameInput.closest('.form-group');
+        formGroup.classList.remove('valid', 'invalid');
+        
+        if (valid) {
+            formGroup.classList.add('valid');
+            usernameHint.style.color = '#28a745';
+        } else {
+            formGroup.classList.add('invalid');
+            usernameHint.style.color = '#dc3545';
+        }
+        
+        usernameHint.textContent = message;
+        usernameHint.style.display = 'block';
+    }
+    
+    function showLoading(element, isLoading) {
+        element.querySelectorAll('.valid-icon, .invalid-icon, .loading-icon')
+            .forEach(icon => icon.style.display = 'none');
+        
+        if (isLoading) {
+            element.querySelector('.loading-icon').style.display = 'inline-block';
+        } else {
+            const formGroup = usernameInput.closest('.form-group');
+            if (formGroup.classList.contains('valid')) {
+                element.querySelector('.valid-icon').style.display = 'inline-block';
+            } else if (formGroup.classList.contains('invalid')) {
+                element.querySelector('.invalid-icon').style.display = 'inline-block';
+            }
+        }
+    }
+
+    // التحقق من صحة النموذج بالكامل
+    const registerForm = document.getElementById('registerForm');
+    const registerBtn = document.getElementById('registerBtn');
+    const inputs = registerForm.querySelectorAll('input[required], select[required]');
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            validateInput(this);
+            checkFormValidity();
+        });
+    });
+
+    function validateInput(input) {
+        const formGroup = input.closest('.form-group, .form-check');
+        const icon = formGroup.querySelector('.validation-icon');
+        const hint = formGroup.querySelector('.hint');
+        let isValid = false;
+        let hintText = '';
+
+        switch(input.type) {
+            case 'email':
+                isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value);
+                hintText = isValid ? '' : 'Invalid email address';
+                break;
+            case 'password':
+                if (input.name === 'password') {
+                    isValid = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(input.value);
+                    hintText = isValid ? '' : 'Must contain uppercase, lowercase, number, special char';
+                } else if (input.name === 'confirm_password') {
+                    const password = document.getElementById('password').value;
+                    isValid = input.value === password && password.length > 0;
+                    hintText = isValid ? '' : 'Passwords do not match';
+                }
+                break;
+            case 'text':
+                if (input.name === 'username') {
+                    // يتم التحقق من اسم المستخدم عبر AJAX
+                    return;
+                } else {
+                    isValid = input.value.trim() !== '';
+                }
+                break;
+            case 'checkbox':
+                isValid = input.checked;
+                hintText = isValid ? '' : 'You must agree to the terms';
+                break;
+            default:
+                isValid = input.value.trim() !== '';
+        }
+
+        updateValidationUI(formGroup, isValid, hintText);
+    }
+
+    function updateValidationUI(formGroup, isValid, hintText = '') {
+        formGroup.classList.remove('valid', 'invalid');
+        
+        if (isValid) {
+            formGroup.classList.add('valid');
+        } else {
+            formGroup.classList.add('invalid');
+        }
+
+        if (hintText) {
+            const hint = formGroup.querySelector('.hint');
+            if (hint) {
+                hint.textContent = hintText;
+                hint.style.display = 'block';
+            }
+        }
+    }
+
+    function checkFormValidity() {
+        const allValid = Array.from(inputs).every(input => {
+            const formGroup = input.closest('.form-group, .form-check');
+            return formGroup.classList.contains('valid');
+        });
+        
+        registerBtn.disabled = !allValid;
+    }
+});
+</script>
+{% endblock %}
